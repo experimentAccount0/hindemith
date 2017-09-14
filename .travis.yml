@@ -1,12 +1,23 @@
 language: python
 python:
   - '2.7'
-  - '3.3'
-  - '3.4'
+
 before_install:
   - sudo apt-get update -qq
   - sudo apt-get install -qq fglrx=2:8.960-0ubuntu1 opencl-headers cmake
+   # add for profile
+  - sudo add-apt-repository -y ppa:ubuntu-toolchain-r/test
+  - sudo apt-get update -qq
+
+
 install:
+# add for profile
+  - sudo apt-get install -qq g++-4.8
+  - export CXX="g++-4.8"
+  - pip install nose-cprof
+  - pip install properform
+
+
   - export PYTHON_VERSION=$(python -c 'import sys; print(sys.version_info[0:2])')
   - pip install -r requirements.txt
   - pip install coveralls coverage
@@ -14,19 +25,10 @@ install:
 script:
   - nosetests --verbose --with-coverage --cover-package=hindemith
   - mv .coverage .coverage.1
-  - CC=gcc HM_BACKEND=omp nosetests --verbose --with-coverage --cover-package=hindemith
+  - CC=gcc HM_BACKEND=omp nosetests --verbose --with-coverage --cover-package=hindemith --with-cprofile --cprofile-stats-erase --cprofile-stats-file=profile_hindemith_f979e4371d_0
+  - python -m properform Push 47.88.50.110:15554 asdf_hindemith_f979e4371d_0 ./profile_hindemith_f979e4371d_0
+
+
   - mv .coverage .coverage.2
   - coverage combine
-deploy:
-  provider: pypi
-  user: leonardt
-  password:
-    secure: VaklmzdQNl3sg4u7TyrLsZFoAxjGieFMvO8z30sno8pW0zsn2YNpkpfDO1Qy/5kXnSpjLNcDYHJLlcsV2njhONU/0ER5bHwlqAY+n7XM8M+Yk/KvTk6k6dfsl6+k8G2L4K5cSydaz1erYCU/TYgzviki/9D2vMnDG/jP65vevGU=
-  on:
-    tags: true
-    all_branches: true
-after_success:
-  - coveralls
-  - curl -X POST http://readthedocs.org/build/hindemith
-notifications:
-  slack: ucb-sejits:cPZxBunxagWZ763mcsIXOV0W
+ #2017-09-14 12:28:48 modified at 0
